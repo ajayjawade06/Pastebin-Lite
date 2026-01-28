@@ -19,15 +19,41 @@ class InMemoryKV {
   }
 }
 
-// Lazy-loaded KV instance
+// Lazy-loaded KV instance (Redis or in-memory fallback)
 let kvInstance: any = null;
 
 async function getKv() {
   if (!kvInstance) {
-    if (process.env.KV_REST_API_URL) {
-      const mod = await import('@vercel/kv');
-      kvInstance = mod.kv;
+    if (process.env.REDIS_URL) {
+      // Use Upstash Redis via REDIS_URL environment variable
+      const { createClient } = await import('redis');
+      const client = createClient({
+        url: process.env.REDIS_URL,
+      });
+
+      // Auto-connect and handle reconnection
+      if (!client.isOpen) {
+        await client.connect();
+      }
+
+      // Wrap Redis client to match KV interface
+      kvInstance = {
+        async set(key: string, value: string, options?: { ex: number }): Promise<void> {
+          if (options?.ex) {
+            await client.setEx(key, options.ex, value);
+          } else {
+            await client.set(key, value);
+          }
+        },
+        async get(key: string): Promise<string | null> {
+          return await client.get(key);
+        },
+        async del(key: string): Promise<void> {
+          await client.del(key);
+        },
+      };
     } else {
+      // Fallback to in-memory for local development
       kvInstance = new InMemoryKV();
     }
   }

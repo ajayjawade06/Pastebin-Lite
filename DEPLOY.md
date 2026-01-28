@@ -35,19 +35,28 @@ This guide covers deploying Pastebin Lite to Vercel (recommended) and other plat
    TEST_MODE=0
    ```
 
-4. **Add KV Database**
+4. **Add Upstash Redis**
 
-   - Go to project settings → Integrations
-   - Search "Storage" → Select "KV"
-   - Click "Add KV Database"
-   - Create new or select existing KV store
-   - Vercel auto-configures `KV_REST_API_URL` and `KV_REST_API_TOKEN`
+   - Go to project dashboard → Storage tab
+   - Click "Create" → Select "Redis"
+   - Choose "Upstash Redis" and link it
+   - Vercel auto-configures `REDIS_URL` environment variable
 
 5. **Deploy**
 
    - Click "Deploy"
    - Wait ~2 minutes for build
    - Visit your app at `https://your-project.vercel.app`
+
+### Environment Variables Summary
+
+| Variable | Required | Source | Notes |
+|----------|----------|--------|-------|
+| `REDIS_URL` | No | Vercel Storage | Auto-set when linking Upstash Redis. If not set, uses in-memory store |
+| `NEXT_PUBLIC_DEPLOYMENT_DOMAIN` | Yes | Manual | Must match your deployed domain |
+| `TEST_MODE` | No | Manual | Set to "1" for deterministic time testing |
+
+**Important:** If `REDIS_URL` is not provided, Pastebin Lite falls back to in-memory storage (data resets on redeploy). For production, always configure Upstash Redis.
 
 ### Custom Domain
 

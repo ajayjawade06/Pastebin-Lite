@@ -20,21 +20,22 @@ Pastebin Lite allows you to instantly share code, notes, and text. Create pastes
 - **Framework:** Next.js 16+ (App Router)
 - **Language:** TypeScript
 - **Runtime:** Node.js
-- **Persistence:** Vercel KV (Redis-compatible key-value store)
+- **Persistence:** Upstash Redis (or local in-memory for dev)
 - **Styling:** Tailwind CSS + Framer Motion
 - **ID Generation:** nanoid
 - **Deployment:** Vercel (serverless)
 
-### Persistence Layer: Vercel KV
+### Persistence Layer: Upstash Redis
 
-We use **Vercel KV** for persistence. It's a Redis-compatible service provided by Vercel, ideal for serverless environments because:
-- No cold-start overhead for small operations
-- Atomic key operations prevent race conditions
-- Managed by Vercel, zero DevOps
+We use **Upstash Redis** for persistence (via REDIS_URL environment variable). It's a serverless Redis service ideal for Next.js because:
+- No connection pooling complexity
+- Atomic operations prevent race conditions
+- Managed by Upstash/Vercel, zero DevOps
 - Automatic persistence across deployments
-- Pay-per-operation, suitable for variable load
+- Pay-per-operation, scales with usage
+- Local in-memory fallback for development (no configuration needed)
 
-**Alternative:** You could swap to Neon Postgres by replacing `/src/lib/kv.ts` with SQL queries, but KV is simpler for this use case.
+**Vercel Integration:** Upstash Redis integrates directly with Vercel. When you add the Redis integration to your Vercel project, it automatically sets `REDIS_URL`.
 
 ## How to Run Locally
 
@@ -54,16 +55,16 @@ We use **Vercel KV** for persistence. It's a Redis-compatible service provided b
    NEXT_PUBLIC_DEPLOYMENT_DOMAIN=http://localhost:3000
    TEST_MODE=0
    ```
+   **Note:** If `REDIS_URL` is not set, the app uses in-memory storage (perfect for local dev).
 
-3. For local Vercel KV emulation (optional):
+3. (Optional) For local Redis emulation:
    - Install Redis locally or use Docker:
      ```bash
      docker run -d -p 6379:6379 redis:latest
      ```
    - Set in `.env.local`:
      ```env
-     KV_REST_API_URL=http://127.0.0.1:6379
-     KV_REST_API_TOKEN=
+     REDIS_URL=redis://localhost:6379
      ```
 
 4. Run development server:
@@ -77,9 +78,11 @@ We use **Vercel KV** for persistence. It's a Redis-compatible service provided b
 
 1. Push to GitHub and connect to Vercel
 2. Vercel automatically detects Next.js
-3. Link a Vercel KV database:
-   - Go to your Vercel project settings
-   - Add KV integration from Marketplace
+3. Add Upstash Redis:
+   - Go to your Vercel project dashboard
+   - Navigate to Storage > Create > Redis
+   - Select Upstash Redis and link it
+   - Vercel automatically sets `REDIS_URL` environment variable
 4. Deploy:
    ```bash
    vercel
