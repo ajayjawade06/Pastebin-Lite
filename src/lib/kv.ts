@@ -1,5 +1,12 @@
+// KV interface for type safety
+interface KVStore {
+  set(key: string, value: string, options?: { ex: number }): Promise<void>;
+  get(key: string): Promise<string | null>;
+  del(key: string): Promise<void>;
+}
+
 // Fallback in-memory store for local development
-class InMemoryKV {
+class InMemoryKV implements KVStore {
   private store = new Map<string, string>();
 
   async set(key: string, value: string, options?: { ex: number }): Promise<void> {
@@ -20,9 +27,9 @@ class InMemoryKV {
 }
 
 // Lazy-loaded KV instance (Redis or in-memory fallback)
-let kvInstance: any = null;
+let kvInstance: KVStore | null = null;
 
-async function getKv() {
+async function getKv(): Promise<KVStore> {
   if (!kvInstance) {
     if (process.env.REDIS_URL) {
       // Use Upstash Redis via REDIS_URL environment variable
@@ -98,7 +105,8 @@ export async function setPaste(
  */
 export async function getPaste(id: string, testNowMs?: number): Promise<PasteData | null> {
   const now = testNowMs ?? getCurrentTime();
-  const raw = await (await getKv()).get<string>(`paste:${id}`);
+  const kv = await getKv();
+  const raw = await kv.get(`paste:${id}`);
 
   if (!raw) return null;
 
