@@ -1,5 +1,23 @@
+// Get deployment domain from env or auto-detect from headers
+export function getDeploymentDomain(headers?: Headers): string {
+  // If explicitly set, use it
+  if (process.env.NEXT_PUBLIC_DEPLOYMENT_DOMAIN) {
+    return process.env.NEXT_PUBLIC_DEPLOYMENT_DOMAIN;
+  }
+
+  // For Vercel, auto-detect from VERCEL_URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  // Fallback to localhost
+  return 'http://localhost:3000';
+}
+
+// Export as constant for backward compatibility
 export const DEPLOYMENT_DOMAIN =
-  process.env.NEXT_PUBLIC_DEPLOYMENT_DOMAIN || 'http://localhost:3000';
+  process.env.NEXT_PUBLIC_DEPLOYMENT_DOMAIN ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
 export const SHORT_ID_LENGTH = 8;
 
